@@ -1,0 +1,33 @@
+services:
+  redmine:
+    image: redmine:5.1
+    ports:
+      - "8080:3000" # ホストOSの8080番ポートをコンテナの3000番ポートにマッピング
+    volumes:
+      - ./redmine/files:/usr/src/redmine/files
+      - ./redmine/plugins:/usr/src/redmine/plugins
+    environment:
+      # RedmineがMySQLデータベースに接続するための設定
+      # DBホスト名は 'db' (MySQLサービスのサービス名) を指定
+      - REDMINE_DB_MYSQL=db
+      - REDMINE_DB_USERNAME=redmine_user
+      - REDMINE_DB_PASSWORD=redmine_pass
+      - REDMINE_DB_DATABASE=redmine
+      # セキュリティのため、必ずランダムで複雑な文字列に変更してください
+      # 生成コマンド例: docker run --rm redmine:5.1 bundle exec rake secret
+      - REDMINE_SECRET_KEY_BASE=YOUR_VERY_VERY_SECRET_KEY_BASE_HERE
+    depends_on:
+      - db # dbサービスが起動してからredmineサービスを起動
+    restart: unless-stopped # コンテナが停止した場合、手動で停止しない限り再起動
+
+  db:
+    image: mysql:8.3
+    volumes:
+      - ./mysql/data:/var/lib/mysql # MySQLのデータを永続化
+    environment:
+      # MySQLの環境変数設定
+      - MYSQL_ROOT_PASSWORD=root_password # rootユーザーのパスワード
+      - MYSQL_DATABASE=redmine # 作成するデータベース名
+      - MYSQL_USER=redmine_user # 作成するユーザー名
+      - MYSQL_PASSWORD=redmine_pass # 作成するユーザーのパスワード
+    restart: unless-stopped # コンテナが停止した場合、手動で停止しない限り再起動
